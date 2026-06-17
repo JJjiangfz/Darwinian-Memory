@@ -12,7 +12,7 @@ AVD_PATH="$WORK/android_avd/AndroidWorldAvd.ini"
 cd "$ROOT"
 source "$WORK/scripts/activate_env.sh"
 
-for command in adb emulator tmux xvfb-run; do
+for command in adb emulator tmux; do
   if ! command -v "$command" >/dev/null 2>&1; then
     echo "missing required command: $command" >&2
     echo "run working_space/scripts/setup_androidworld_runtime.sh first" >&2
@@ -51,8 +51,13 @@ tmux kill-session -t "$SESSION" 2>/dev/null || true
 adb kill-server >/dev/null 2>&1 || true
 rm -f "$WORK/android_avd/AndroidWorldAvd.avd/"*.lock 2>/dev/null || true
 
+gpu_flag="swiftshader_indirect"
+if [[ "$OSTYPE" == *linux* ]]; then
+  gpu_flag="off"
+fi
+
 tmux new-session -d -s "$SESSION" \
-  "cd '$ROOT' && source '$WORK/scripts/activate_env.sh' && unset CUDA_VISIBLE_DEVICES && export LIBGL_ALWAYS_SOFTWARE=1 MESA_LOADER_DRIVER_OVERRIDE=llvmpipe && xvfb-run -a emulator -avd AndroidWorldAvd -show-kernel -no-audio -no-boot-anim -no-snapshot -no-metrics -gpu swiftshader_indirect -accel on -grpc 8554 >> '$LOG' 2>&1"
+  "cd '$ROOT' && source '$WORK/scripts/activate_env.sh' && unset CUDA_VISIBLE_DEVICES && export LIBGL_ALWAYS_SOFTWARE=1 MESA_LOADER_DRIVER_OVERRIDE=llvmpipe && emulator -avd AndroidWorldAvd -no-window -show-kernel -no-audio -no-boot-anim -no-snapshot -no-metrics -memory 2048 -gpu '$gpu_flag' -accel on -grpc 8554 >> '$LOG' 2>&1"
 
 echo "$SESSION" > "$WORK/logs/androidworld_emulator.tmux_session"
 

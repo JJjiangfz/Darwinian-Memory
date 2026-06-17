@@ -42,20 +42,53 @@ Dynamic Pruning：
 
 ## Running
 
-### Preparation
-```bash
-# 创建虚拟环境并安装requirements.txt
-conda create -y -p ./working_space/conda_envs/dms_py310 python=3.10
-conda activate ./working_space/conda_envs/dms_py310
-pip install -r working_space/requirements.txt
+### Host Prerequisites
+- Linux `x86_64`
+- `conda` available at `PATH`, `$HOME/miniconda3/bin/conda`, or `$HOME/anaconda3/bin/conda`
+- host commands: `curl`, `unzip`, `tar`, `tmux`
+- one NVIDIA GPU with enough VRAM to load `Qwen/Qwen2.5-VL-7B-Instruct`
 
-# or run 此一键创建环境脚本
+### Verified Fresh-Clone Path
+这是当前仓库**实际验证过**的推荐安装路径。它会：
+- 创建独立的 `python=3.10` conda 环境
+- 显式禁用 `~/.local` 用户站点包，避免全局 Python 包污染新环境
+- 在安装后自动修复 `android_env` 在 Python 3.10 下的 `Self` 导入兼容问题
+- 自动下载 Android SDK / JDK / AVD / accessibility forwarder / model weights
+- 启动 emulator，完成 AndroidWorld app setup，并做一次环境联通性检查
+
+```bash
+# one command bootstrap
+bash working_space/scripts/bootstrap_clone_setup.sh
+```
+
+如果下载过程中网络中断，**直接重跑同一条命令即可**；脚本是按阶段设计的，已完成的安装目标会被复用。
+如果 `working_space/model_cache` 里已经存在模型缓存，`download_models.sh` 会优先复用本地缓存，再回退到联网下载。
+
+安装完成后，先用单任务 smoke test 验证整条链路：
+```bash
+bash working_space/scripts/run_baseline_a_zero_shot.sh \
+  working_space/datasets/smoke_open_settings.yaml 1 0
+```
+
+看到终端输出的 summary JSON 中包含 `\"successful_tasks\": 1`，就说明 clone 环境已经可以正常启动和执行测试。
+
+### Manual Preparation
+如果你不想跑完整 bootstrap，可以按下面的两步手动执行。下面这个脚本化路径和上面的 bootstrap 共用同一套修复逻辑，也是可复现的。
+
+```bash
+# create env, install requirements, disable user-site leakage,
+# and auto-patch android_env for Python 3.10 compatibility
 bash working_space/scripts/setup_python_env.sh
 ```
 
 ```bash
-# 在 Python 环境准备完成后，再运行一键装载其余运行资产：
+# after Python env is ready, install runtime assets and run env checks
 bash working_space/scripts/setup_runtime_assets.sh
+```
+
+如果你坚持手动执行原始 `conda create + pip install`，至少还需要补跑下面这一步，否则 `android_env` 在 Python 3.10 上可能会因为 `from typing import Self` 直接导入失败：
+```bash
+python working_space/scripts/patch_android_env_py310.py
 ```
 
 - 该脚本会自动完成以下准备工作：
@@ -74,6 +107,14 @@ bash working_space/scripts/bootstrap_clone_setup.sh
 ```
 
 ### Running the Code
+建议先用 `smoke_open_settings.yaml` 做一次最小验证，再跑 5-round mini benchmark：
+
+```bash
+# smoke test
+bash working_space/scripts/run_baseline_a_zero_shot.sh \
+  working_space/datasets/smoke_open_settings.yaml 1 0
+```
+
 ```bash
 # Baseline A
 bash working_space/scripts/run_baseline_a_zero_shot.sh \

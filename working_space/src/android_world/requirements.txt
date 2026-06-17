@@ -18,3 +18,4 @@ pytest
 requests
 tenacity
 termcolor
+typing_extensions==4.15.0

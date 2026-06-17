@@ -35,11 +35,25 @@ require_command() {
 download_if_missing() {
   local url="$1"
   local output="$2"
-  if [[ -f "$output" ]]; then
+  local partial_output="${output}.partial"
+  if [[ -s "$output" ]]; then
     return 0
   fi
   mkdir -p "$(dirname "$output")"
-  curl -L --fail --retry 3 --output "$output" "$url"
+  rm -f "$partial_output"
+  curl -L --fail --retry 3 --retry-all-errors --output "$partial_output" "$url"
+  mv "$partial_output" "$output"
+}
+
+accept_sdk_licenses() {
+  local sdkmanager_status=0
+  set +o pipefail
+  yes | sdkmanager --sdk_root="$ANDROID_HOME" --licenses >/dev/null || sdkmanager_status=$?
+  set -o pipefail
+  if [[ "$sdkmanager_status" -ne 0 ]]; then
+    echo "failed to accept Android SDK licenses automatically" >&2
+    return "$sdkmanager_status"
+  fi
 }
 
 upsert_ini() {
@@ -99,7 +113,7 @@ install_sdk_packages() {
   export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
 
   mkdir -p "$ANDROID_HOME" "$ANDROID_AVD_HOME" "$DOWNLOAD_DIR"
-  yes | sdkmanager --sdk_root="$ANDROID_HOME" --licenses >/dev/null
+  accept_sdk_licenses
   sdkmanager --sdk_root="$ANDROID_HOME" "${ANDROID_SDK_PACKAGES[@]}"
 }
 
@@ -141,7 +155,7 @@ main() {
   download_if_missing "$ACCESSIBILITY_FORWARDER_URL" "$ACCESSIBILITY_FORWARDER_APK"
   create_avd
 
-  for optional_command in tmux xvfb-run; do
+  for optional_command in tmux; do
     if ! command -v "$optional_command" >/dev/null 2>&1; then
       echo "warning: missing optional host command: $optional_command" >&2
       echo "warning: start_androidworld_emulator.sh will require it." >&2

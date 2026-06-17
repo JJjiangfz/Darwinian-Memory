@@ -33,6 +33,7 @@ dependencies = [
     "termcolor",
     "fastapi",
     "uvicorn",
+    "typing_extensions==4.15.0",
 ]
 
 [project.optional-dependencies]
