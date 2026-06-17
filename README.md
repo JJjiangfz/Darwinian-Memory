@@ -3,7 +3,7 @@
 ## Baseline A
 - 对应纯 `zero-shot VLM` 基线，不引入任何跨任务记忆机制
 - 每个任务只基于当前界面观测、任务目标和任务内历史轨迹决策。
-- Chain: `run_baseline_a_zero_shot.sh` -> `dms_repro。runner` -> `PALiteAgent` -> `QwenVLClient` -> `AndroidWorld`
+- Chain: `run_baseline_a_zero_shot.sh` -> `dms_repro.runner` -> `PALiteAgent` -> `QwenVLClient` -> `AndroidWorld`
 
 ## Baseline B
 - 对应 `static memory` 基线，在Baseline A中额外引入按时间顺序追加的静态跨任务记忆。
@@ -25,20 +25,20 @@
 
 Survival Value：
 - 对每条 memory，根据 `reuse_count`、`time decay`、`success / failure`、`invalid action rate` 和 `execution error rate` 计算其生存价值。
-- 相关代码实现见 [darwinian_memory.py](src/dms_repro/darwinian_memory.py) 的 `_survival_value(...)`。
+- 相关代码实现见 [darwinian_memory.py](working_space/src/dms_repro/darwinian_memory.py) 的 `_survival_value(...)`。
 - 公式可以概括为：`survival_value = utility * adaptive_decay * reliability`。
-- survival 值的刷新入口见 [darwinian_memory.py](src/dms_repro/darwinian_memory.py) 的 `_refresh_entry(...)`，每次 memory 被创建、复用、失败回写或任务结束后都会更新。
+- survival 值的刷新入口见 [darwinian_memory.py](working_space/src/dms_repro/darwinian_memory.py) 的 `_refresh_entry(...)`，每次 memory 被创建、复用、失败回写或任务结束后都会更新。
 
 Dynamic Pruning：
 - 当 memory bank 接近当前容量上限时，系统会按 memory 的 `survival_value` 排序，根据 score 曲线的 elbow 位置决定保留数量。
 - 如果 elbow 位置说明高价值 memory 仍然较多，则扩容；否则将 elbow 后的低价值 memory 标记为 `dynamic_pruning`。
-- 相关代码实现见 [darwinian_memory.py](src/dms_repro/darwinian_memory.py) 的 `_prune_if_needed(...)`。
+- 相关代码实现见 [darwinian_memory.py](working_space/src/dms_repro/darwinian_memory.py) 的 `_prune_if_needed(...)`。
 
 ## Settings Details
 - 本复现工程基于 `AndroidWorld` 动态 GUI 环境，在本地 Android emulator 上完成三种方法的统一评测。
-- emulator 配置见 [runtime.yaml](configs/runtime.yaml)，当前使用的 AVD 为 `AndroidWorldAvd`，对应本地 Android SDK、ADB、emulator 和 accessibility forwarder 运行链路。
-- Model Backbone 均使用 `Qwen/Qwen2.5-VL-7B-Instruct` 作为底层决策模型，配置见 [model_qwen25vl_7b.yaml](configs/model_qwen25vl_7b.yaml)。
-- DMS 额外使用 `all-MiniLM-L6-v2` 作为文本 embedding 模型，用于 memory 检索中的相似度计算；对应配置见 [eval_baselines.yaml](configs/eval_baselines.yaml)。
+- emulator 配置见 [runtime.yaml](working_space/configs/runtime.yaml)，当前使用的 AVD 为 `AndroidWorldAvd`，对应本地 Android SDK、ADB、emulator 和 accessibility forwarder 运行链路。
+- Model Backbone 均使用 `Qwen/Qwen2.5-VL-7B-Instruct` 作为底层决策模型，配置见 [model_qwen25vl_7b.yaml](working_space/configs/model_qwen25vl_7b.yaml)。
+- DMS 额外使用 `all-MiniLM-L6-v2` 作为文本 embedding 模型，用于 memory 检索中的相似度计算；对应配置见 [eval_baselines.yaml](working_space/configs/eval_baselines.yaml)。
 
 ## Running
 
@@ -100,30 +100,30 @@ bash working_space/scripts/run_dms_hierarchical_memory.sh \
 
 
 ## Visualizations
-Baseline A vs. DMS: 
+Baseline A vs. DMS:
 <table>
   <tr>
-    <td><img src="runs/comparisons/baseline_a_vs_dms_20260616_mini20_5round/success_rate_by_round.png" alt="Baseline A vs DMS Success Rate" width="100%"></td>
-    <td><img src="runs/comparisons/baseline_a_vs_dms_20260616_mini20_5round/avg_steps_by_round.png" alt="Baseline A vs DMS Avg Steps" width="100%"></td>
+    <td><img src="working_space/runs/comparisons/baseline_a_vs_dms_20260616_mini20_5round/success_rate_by_round.png" alt="Baseline A vs DMS Success Rate" width="100%"></td>
+    <td><img src="working_space/runs/comparisons/baseline_a_vs_dms_20260616_mini20_5round/avg_steps_by_round.png" alt="Baseline A vs DMS Avg Steps" width="100%"></td>
   </tr>
   <tr>
-    <td><img src="runs/comparisons/baseline_a_vs_dms_20260616_mini20_5round/avg_tokens_by_round.png" alt="Baseline A vs DMS Avg Tokens" width="100%"></td>
-    <td><img src="runs/comparisons/baseline_a_vs_dms_20260616_mini20_5round/memory_size_timeline.png" alt="Baseline A vs DMS Memory Timeline" width="100%"></td>
+    <td><img src="working_space/runs/comparisons/baseline_a_vs_dms_20260616_mini20_5round/avg_tokens_by_round.png" alt="Baseline A vs DMS Avg Tokens" width="100%"></td>
+    <td><img src="working_space/runs/comparisons/baseline_a_vs_dms_20260616_mini20_5round/memory_size_timeline.png" alt="Baseline A vs DMS Memory Timeline" width="100%"></td>
   </tr>
 </table>
 
 - DMS 相比 `Baseline A` 在同一 `mini-benchmark` 上把成功率从 7% 提升到 12%，同时平均 token 和平均 step 都更低。
 
 
-Baseline B vs. DMS: 
+Baseline B vs. DMS:
 <table>
   <tr>
-    <td><img src="runs/comparisons/baseline_b_vs_dms_20260616_mini20_5round/success_rate_by_round.png" alt="Baseline B vs DMS Success Rate" width="100%"></td>
-    <td><img src="runs/comparisons/baseline_b_vs_dms_20260616_mini20_5round/avg_steps_by_round.png" alt="Baseline B vs DMS Avg Steps" width="100%"></td>
+    <td><img src="working_space/runs/comparisons/baseline_b_vs_dms_20260616_mini20_5round/success_rate_by_round.png" alt="Baseline B vs DMS Success Rate" width="100%"></td>
+    <td><img src="working_space/runs/comparisons/baseline_b_vs_dms_20260616_mini20_5round/avg_steps_by_round.png" alt="Baseline B vs DMS Avg Steps" width="100%"></td>
   </tr>
   <tr>
-    <td><img src="runs/comparisons/baseline_b_vs_dms_20260616_mini20_5round/avg_tokens_by_round.png" alt="Baseline B vs DMS Avg Tokens" width="100%"></td>
-    <td><img src="runs/comparisons/baseline_b_vs_dms_20260616_mini20_5round/memory_size_timeline.png" alt="Baseline B vs DMS Memory Timeline" width="100%"></td>
+    <td><img src="working_space/runs/comparisons/baseline_b_vs_dms_20260616_mini20_5round/avg_tokens_by_round.png" alt="Baseline B vs DMS Avg Tokens" width="100%"></td>
+    <td><img src="working_space/runs/comparisons/baseline_b_vs_dms_20260616_mini20_5round/memory_size_timeline.png" alt="Baseline B vs DMS Memory Timeline" width="100%"></td>
   </tr>
 </table>
 
@@ -134,12 +134,12 @@ Results of DMS:
 
 <table>
   <tr>
-    <td><img src="runs/dms_hierarchical_memory/20260616_mini20_5round_resume/analysis/success_rate_by_round.png" alt="DMS Success Rate by Round" width="100%"></td>
-    <td><img src="runs/dms_hierarchical_memory/20260616_mini20_5round_resume/analysis/steps_by_round.png" alt="DMS Steps by Round" width="100%"></td>
+    <td><img src="working_space/runs/dms_hierarchical_memory/20260616_mini20_5round_resume/analysis/success_rate_by_round.png" alt="DMS Success Rate by Round" width="100%"></td>
+    <td><img src="working_space/runs/dms_hierarchical_memory/20260616_mini20_5round_resume/analysis/steps_by_round.png" alt="DMS Steps by Round" width="100%"></td>
   </tr>
   <tr>
-    <td><img src="runs/dms_hierarchical_memory/20260616_mini20_5round_resume/analysis/tokens_by_round.png" alt="DMS Tokens by Round" width="100%"></td>
-    <td><img src="runs/dms_hierarchical_memory/20260616_mini20_5round_resume/analysis/memory_size_timeline.png" alt="DMS Memory Timeline" width="100%"></td>
+    <td><img src="working_space/runs/dms_hierarchical_memory/20260616_mini20_5round_resume/analysis/tokens_by_round.png" alt="DMS Tokens by Round" width="100%"></td>
+    <td><img src="working_space/runs/dms_hierarchical_memory/20260616_mini20_5round_resume/analysis/memory_size_timeline.png" alt="DMS Memory Timeline" width="100%"></td>
   </tr>
 </table>
 
