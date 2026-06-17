@@ -1,0 +1,52 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Local tooling
+.codex/
+.agents/
+
+# Python caches
+__pycache__/
+*.py[cod]
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Environment / large local runtime assets
+working_space/conda_envs/
+working_space/model_cache/
+working_space/android_sdk/
+working_space/android_avd/
+working_space/jdks/
+working_space/downloads/
+working_space/logs/
+working_space/intermediate/
+
+# Generated runtime outputs
+working_space/runs/*
+!working_space/runs/comparisons/
+!working_space/runs/comparisons/**
+!working_space/runs/dms_hierarchical_memory/
+working_space/runs/dms_hierarchical_memory/*
+!working_space/runs/dms_hierarchical_memory/20260616_mini20_5round_resume/
+working_space/runs/dms_hierarchical_memory/20260616_mini20_5round_resume/*
+!working_space/runs/dms_hierarchical_memory/20260616_mini20_5round_resume/analysis/
+!working_space/runs/dms_hierarchical_memory/20260616_mini20_5round_resume/analysis/**
+
+# Generic generated artifacts
+*.log
+*.tmp
+*.temp
+*.pid
+*.bak
+*.bak_*
